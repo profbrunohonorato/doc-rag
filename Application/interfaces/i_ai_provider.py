@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class IAIProvider(Protocol):
+    def embed(self, texts: list[str]) -> list[list[float]]: ...
+    def generate(self, question: str, sources: list[dict]) -> str: ...

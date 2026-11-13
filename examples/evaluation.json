@@ -1,0 +1,5 @@
+[
+  {"question": "Quais documentos preciso para abrir uma conta na Cooperativa Aurora?", "relevant_documents": ["source/atendimento.md"]},
+  {"question": "Qual é o horário de atendimento humano da Cooperativa Aurora?", "relevant_documents": ["source/atendimento.md"]},
+  {"question": "Qual o prazo de análise inicial de uma contestação?", "relevant_documents": ["source/atendimento.md"]}
+]

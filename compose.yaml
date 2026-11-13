@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: doc_rag
+      POSTGRES_USER: doc_rag
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-doc_rag_local}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U doc_rag -d doc_rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  ollama:
+    image: ollama/ollama:0.13.5
+    volumes:
+      - models:/root/.ollama
+    restart: unless-stopped
+  models:
+    image: ollama/ollama:0.13.5
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CHAT_MODEL: ${CHAT_MODEL:-qwen2.5:3b}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'until ollama list; do sleep 2; done; ollama pull "$$CHAT_MODEL" && ollama pull "$$EMBEDDING_MODEL"'
+    depends_on:
+      - ollama
+    restart: on-failure
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg2://doc_rag:${POSTGRES_PASSWORD:-doc_rag_local}@postgres:5432/doc_rag
+      DOCUMENTS_PATH: /documents
+      VECTOR_PATH: /app/data/chroma
+      OLLAMA_URL: http://ollama:11434
+      CHAT_MODEL: ${CHAT_MODEL:-qwen2.5:3b}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      API_TOKEN: ${API_TOKEN:-}
+      REQUIRE_REVIEW: ${REQUIRE_REVIEW:-true}
+      ANONYMIZED_TELEMETRY: 'False'
+    volumes:
+      - ${DOCUMENTS_PATH:-./examples/documents}:/documents/source:ro
+      - uploads:/documents/_uploads
+      - index:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      models:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  ui:
+    build: Presentation/GUI
+    ports:
+      - '127.0.0.1:8080:80'
+    depends_on:
+      - api
+    restart: unless-stopped
+volumes:
+  postgres:
+  models:
+  uploads:
+  index:

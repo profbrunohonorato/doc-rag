@@ -1,0 +1,5 @@
+import { Chip, Paper } from '@mui/material'
+const labels = { pending: 'Aguardando revisão', approved: 'Aprovada por revisor', rejected: 'Rejeitada por revisor', generated: 'Gerada · sem revisão', insufficient_evidence: 'Evidência insuficiente' }
+export default function AnswerCard({ item }) {
+  return <Paper variant="outlined" className="answer-card"><div className="answer-meta"><Chip size="small" color={item.status === 'approved' ? 'success' : 'default'} label={labels[item.status] || item.status}/><small>{(item.duration_ms / 1000).toFixed(1)}s</small></div><h3>{item.question}</h3><p className="answer-text">{item.answer}</p>{item.status === 'pending' && <p className="muted">Rascunho disponível para conferência. Ainda não aprovado para uso.</p>}<details><summary>Conferir {item.sources.length} fontes recuperadas</summary>{item.sources.map((source, i) => <div className="source" key={i}><strong>[{i + 1}] {source.name}</strong><small>Localização {source.page} · similaridade {source.score.toFixed(2)}</small><p>{source.text}</p></div>)}</details><div className="footnote">{new Date(item.created_at).toLocaleString('pt-BR')} · {item.model}</div></Paper>
+}
